@@ -26,7 +26,7 @@
   function showMenu()
   {
     const menu={
-      '': { 'title': 'Rebble Clock' },
+      '': { 'title': 'Rebble Clock2' },
       '< Back': back,
       'Colour': {
         value: 0 | color_options.indexOf(localSettings.color),

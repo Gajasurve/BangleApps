@@ -8,6 +8,36 @@ Graphics.prototype.setFontKdamThmor = function(scale) {
   );
   return this;
 }
+// Function to get today's tithi
+function getTithi() {
+  const today = new Date();  // Get the current date
+  const startLunarDate = new Date('2024-01-01');  // Example: Known start of lunar month (must be actual start date of the lunar month)
+
+  // Calculate the difference in days
+  const diffInTime = today.getTime() - startLunarDate.getTime();
+  const diffInDays = Math.floor(diffInTime / (1000 * 3600 * 24));  // Convert milliseconds to days
+
+  // Lunar month cycle is 30 days (simplified), so calculate the tithi (day in the lunar cycle)
+  const lunarDay = diffInDays % 30;  // This gives us a number between 0 and 29
+
+  // Tithi names
+  const tithiNames = [
+    'Pratipada', 'Dvitia', 'Tritiya', 'Chaturthi', 'Panchami', 'Shashti', 'Saptami', 'Ashtami',
+    'Navami', 'Dashami', 'Ekadashi', 'Dwadashi', 'Trayodashi', 'Chaturdashi', 'Purnima',
+    'Pratipada', 'Dvitia', 'Tritiya', 'Chaturthi', 'Panchami', 'Shashti', 'Saptami', 'Ashtami',
+    'Navami', 'Dashami', 'Ekadashi', 'Dwadashi', 'Trayodashi', 'Chaturdashi', 'Amavasya'
+  ];
+
+  // Determine if it's Shukla Paksha or Krishna Paksha based on the lunar day
+  const isShuklaPaksha = lunarDay < 15;
+
+  // Return the tithi and whether it's Shukla or Krishna Paksha
+  const tithi = tithiNames[lunarDay];
+  const paksha = isShuklaPaksha ? 'Shukla Paksha' : 'Krishna Paksha';
+
+  return `${paksha} ${tithi}`;
+}
+
 
 
 {
@@ -229,21 +259,20 @@ Graphics.prototype.setFontKdamThmor = function(scale) {
   }
 
   // sunrise, sunset times
-  let drawSideBar3=function() {
-    g.setColor('#fff'); // sunrise white
-    g.drawImage(sunrise_img, w2 + (ws - 64)/2, 0, { scale: 1 });
-    setTextColor();
-    setSmallFont();
-    g.setFontAlign(0, -1);
-    g.drawString(sunRise, w3, 64);
+let drawSideBar3 = function() {
+  g.setColor('#fff');  // Set background color for the tithi sidebar
+  g.fillRect(w2 + (ws - 64) / 2, 0, w2 + (ws + 64) / 2, h);  // Draw background for the sidebar
 
-    g.setColor('#000'); // sunset black
-    g.drawImage(sunset_img, w2 + (ws - 64)/2, h/2, { scale: 1 });
-    setTextColor();
-    setSmallFont();
-    g.setFontAlign(0, -1);
-    g.drawString(sunSet, w3, (h/2) + 64);
-  }
+  setTextColor();  // Set text color
+  setSmallFont();  // Set font for tithi text
+  g.setFontAlign(0, -1);  // Align the text to the center
+
+  // Get today's tithi using the function
+  const tithi = getTithi();
+
+  // Draw the tithi on the sidebar
+  g.drawString(tithi, w2 + (ws / 2), 40);  // Adjust position as needed
+};
 
   let drawDateAndCalendar=function(x,y,dy,dd,mm) {
     // day

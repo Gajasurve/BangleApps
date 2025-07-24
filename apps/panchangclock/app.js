@@ -1,3 +1,4 @@
+let Storage = require("Storage");
 let panchangData, nextTimeout;
 const Storage = require("Storage");
 

@@ -9,7 +9,7 @@ function horaColor(hora) {
   return "#ffffff";
 }
 
-// Load today's panchang data from storage
+// Load today's panchang data from storage Ok. 
 function loadTodayData() {
   let today = new Date().toISOString().slice(0,10);
   let json = Storage.readJSON("panchang-2025.json", 1e4);

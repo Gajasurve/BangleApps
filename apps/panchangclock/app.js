@@ -1,10 +1,25 @@
 let panchangData, nextTimeout;
+const Storage = require("Storage");
 
 // Color helper for hora
 function horaColor(hora) {
   if (["VE", "MO", "JUP"].includes(hora)) return "#00ff00";
   if (["ME", "MA"].includes(hora)) return "#ffff00";
   return "#ffffff";
+}
+
+// Get vara lord for the weekday abbreviation
+function getVaraLord(dayAbbr) {
+  const map = {
+    SU: "SU",
+    MO: "MO",
+    TU: "MA",
+    WE: "ME",
+    TH: "JUP",
+    FR: "VE",
+    SA: "SA"
+  };
+  return map[dayAbbr] || "??";
 }
 
 // Load today's panchang data from storage
@@ -119,19 +134,19 @@ function drawHora() {
     g.drawPixel(i, 132);
   }
 
-  // Draw VE on left half
+  // Draw current hora on left half
   g.setFont("Vector", 28);
   g.setFontAlign(-1, 0);
   g.setColor(horaColor(bHora));
   g.drawString(bHora, 50, 110);
 
-  // Draw RA on right half
+  // Draw Vara lord (not hardcoded) on right half
   g.setFont("Vector", 28);
   g.setFontAlign(-1, 0);
   g.setColor("#fff");
-  g.drawString("RA", 120, 110);
+  g.drawString(getVaraLord(bVara), 120, 110);
 
-  // Draw date at right edge below RA
+  // Draw date at right edge below
   g.setFont("Vector", 14);
   g.setFontAlign(1, 1);
   g.setColor("#fff");
@@ -174,8 +189,9 @@ function init() {
   panchangData = loadTodayData();
   if (!panchangData) return;
 
-  bVara = new Date().toLocaleString('en-US', {weekday:'short'}).toUpperCase().slice(0,2);
-  bDate = new Date().getDate();
+  let d = new Date();
+  bVara = d.toLocaleString('en-US', {weekday:'short'}).toUpperCase().slice(0,2);
+  bDate = d.getDate();
 
   // Set initial values
   let curH = getCurrentSlot(panchangData.hora).slot.planet;

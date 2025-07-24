@@ -1,0 +1,117 @@
+{
+  "2025-07-24": {
+    "hora": [
+      {
+        "start": "05:53",
+        "planet": "SU"
+      },
+      {
+        "start": "06:53",
+        "planet": "VE"
+      },
+      {
+        "start": "07:53",
+        "planet": "ME"
+      },
+      {
+        "start": "08:53",
+        "planet": "JU"
+      },
+      {
+        "start": "09:53",
+        "planet": "SA"
+      },
+      {
+        "start": "10:53",
+        "planet": "MO"
+      },
+      {
+        "start": "11:53",
+        "planet": "MA"
+      },
+      {
+        "start": "12:53",
+        "planet": "RA"
+      },
+      {
+        "start": "13:53",
+        "planet": "SU"
+      },
+      {
+        "start": "14:53",
+        "planet": "VE"
+      },
+      {
+        "start": "15:53",
+        "planet": "ME"
+      },
+      {
+        "start": "16:53",
+        "planet": "JU"
+      },
+      {
+        "start": "17:53",
+        "planet": "SA"
+      },
+      {
+        "start": "18:53",
+        "planet": "MO"
+      },
+      {
+        "start": "19:53",
+        "planet": "MA"
+      },
+      {
+        "start": "20:53",
+        "planet": "RA"
+      },
+      {
+        "start": "21:53",
+        "planet": "SU"
+      },
+      {
+        "start": "22:53",
+        "planet": "VE"
+      },
+      {
+        "start": "23:53",
+        "planet": "ME"
+      },
+      {
+        "start": "00:53",
+        "planet": "JU"
+      },
+      {
+        "start": "01:53",
+        "planet": "SA"
+      },
+      {
+        "start": "02:53",
+        "planet": "MO"
+      },
+      {
+        "start": "03:53",
+        "planet": "MA"
+      },
+      {
+        "start": "04:53",
+        "planet": "RA"
+      }
+    ],
+    "tithi": [
+      {
+        "start": "00:00",
+        "name": "Shukla Paksha Ashtami",
+        "type": "Purna"
+      },
+      {
+        "start": "22:00",
+        "name": "Shukla Paksha Navami",
+        "type": "Nanda"
+      }
+    ],
+    "vara": {
+      "lord": "JU"
+    }
+  }
+}

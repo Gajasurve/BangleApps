@@ -1,4 +1,4 @@
-require("Storage");
+let Storage = require("Storage");
 
 let panchangData, nextTimeout;
 

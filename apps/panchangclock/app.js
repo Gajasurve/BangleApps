@@ -1,5 +1,4 @@
-const Storage = require("Storage");
-// Panchang Clock app for Bangle.js2
+let Storage = require("Storage");
 let panchangData, nextTimeout;
 
 // Color helper for hora
@@ -12,12 +11,12 @@ function horaColor(hora) {
 // Load today's panchang data from storage
 function loadTodayData() {
   let today = new Date().toISOString().slice(0,10);
-  let json = require("Storage").readJSON("panchang-2025.json", 1e4);
+  let json = Storage.readJSON("panchang-2025.json", 1e4);
   if (!json || !json[today]) {
     g.clear();
     g.setFontAlign(0,0);
     g.setFont("Vector",20);
-    g.drawString("No Panchang data", 88, 88);
+    g.drawString("No Panchang data for today", 88, 88);
     return null;
   }
   return json[today];
@@ -27,9 +26,11 @@ function loadTodayData() {
 function getCurrentSlot(slots) {
   let now = new Date();
   let cur = now.getHours() * 60 + now.getMinutes();
-  let index = slots.map(s=> {
-    let [h,m] = s.start.split(":").map(Number);
-    return h*60 + m;
+  let index = slots.map(s => {
+    let parts = s.start.split(":");
+    let h = parseInt(parts[0], 10);
+    let m = parseInt(parts[1], 10);
+    return h * 60 + m;
   }).filter(t => t <= cur).length - 1;
   if (index < 0) index = slots.length - 1;
   return { idx: index, slot: slots[index] };
@@ -38,16 +39,18 @@ function getCurrentSlot(slots) {
 // Schedule the next update when hora or tithi changes
 function scheduleNextChange(slots, handler) {
   let now = new Date();
-  let curMin = now.getHours()*60 + now.getMinutes();
+  let curMin = now.getHours() * 60 + now.getMinutes();
   let upcoming = slots
     .map(s => {
-      let [h,m] = s.start.split(":").map(Number);
-      let t = h*60 + m;
-      if (t <= curMin) t += 24*60;
+      let parts = s.start.split(":");
+      let h = parseInt(parts[0], 10);
+      let m = parseInt(parts[1], 10);
+      let t = h * 60 + m;
+      if (t <= curMin) t += 24 * 60;
       return { timeMin: t, s };
     })
     .sort((a,b) => a.timeMin - b.timeMin)[0];
-  let diff = (upcoming.timeMin - curMin)*60*1000;
+  let diff = (upcoming.timeMin - curMin) * 60 * 1000;
   if (nextTimeout) clearTimeout(nextTimeout);
   nextTimeout = setTimeout(handler, diff + 500);
 }
@@ -60,6 +63,8 @@ function drawTime() {
   let hours = ("0" + now.getHours()).substr(-2);
   let minutes = ("0" + now.getMinutes()).substr(-2);
   let timeStr = hours + ":" + minutes;
+
+  // Clear top half
   g.reset();
   g.clearRect(0,0,176,88);
   g.setFont("Vector", 52);
@@ -103,19 +108,20 @@ function drawTithi() {
 
 function drawHora() {
   g.clearRect(44, 88, 176, 176);
-  let midX = (176 + 44) / 2;
   let colors = ["#f00","#f80","#ff0","#0f0","#00f","#408","#f0f"];
-  for(let i = 44; i < 176; i++) {
+  for (let i = 44; i < 176; i++) {
     g.setColor(colors[(i-44) % colors.length]);
     g.drawPixel(i, 132);
   }
+
   g.setFont("Vector", 28);
   g.setFontAlign(-1, 0);
   g.setColor(horaColor(bHora));
   g.drawString(bHora, 50, 110);
-  g.setFontAlign(-1, 0);
+
   g.setColor("#fff");
-  g.drawString(bVara, 120, 110);
+  g.drawString(bVara, 120, 110);  // Vara instead of "RA"
+
   g.setFont("Vector", 14);
   g.setFontAlign(1, 1);
   g.setColor("#fff");
@@ -129,6 +135,7 @@ function redrawAll() {
   drawHora();
 }
 
+// Update hora & schedule next update
 function updateHora() {
   let cur = getCurrentSlot(panchangData.hora);
   bHora = cur.slot.planet;
@@ -137,6 +144,7 @@ function updateHora() {
   scheduleNextChange(panchangData.hora, updateHora);
 }
 
+// Update tithi & schedule next update
 function updateTithi() {
   let cur = getCurrentSlot(panchangData.tithi);
   bTithi = cur.slot.name + " - " + cur.slot.type;
@@ -151,6 +159,7 @@ function init() {
   Bangle.setLCDTimeout(0);
   Bangle.setUI();
 
+  // Load data
   panchangData = loadTodayData();
   if (!panchangData) return;
 
@@ -159,12 +168,14 @@ function init() {
   bVara = weekdayMap[d.getDay()];
   bDate = d.getDate();
 
+  // Set initial values
   let curH = getCurrentSlot(panchangData.hora).slot.planet;
   let curT = getCurrentSlot(panchangData.tithi);
   bHora = curH;
   bTithi = curT.slot.name + " - " + curT.slot.type;
 
   redrawAll();
+
   scheduleNextChange(panchangData.hora, updateHora);
   scheduleNextChange(panchangData.tithi, updateTithi);
 
@@ -177,7 +188,8 @@ function init() {
   });
 
   setInterval(drawTime, 60000);
-  setWatch(() => load(), BTN1, { edge:"rising", repeat:false });
+
+  setWatch(() => load(), BTN1, { edge: "rising", repeat: false });
 }
 
 init();

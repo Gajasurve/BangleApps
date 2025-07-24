@@ -4,7 +4,6 @@
   "icon": "app.png",
   "sortorder": 100,
   "type": "clock",
-  "readme": "README.md",
   "tags": "clock,panchang",
   "description": "Shows Hora, Tithi & Vara with Panchang data"
 }

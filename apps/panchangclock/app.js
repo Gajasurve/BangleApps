@@ -1,7 +1,7 @@
 let Storage = require("Storage");
 let panchangData, nextTimeout;
 
-// Color helper for hora
+// Color helper for hora test
 function horaColor(hora) {
   if (["VE", "MO", "JUP"].includes(hora)) return "#00ff00";
   if (["ME", "MA"].includes(hora)) return "#ffff00";

@@ -190,9 +190,11 @@ function init() {
   panchangData = loadTodayData();
   if (!panchangData) return;
 
-  let d = new Date();
-  bVara = d.toLocaleString('en-US', {weekday:'short'}).toUpperCase().slice(0,2);
-  bDate = d.getDate();
+let d = new Date();
+const weekdayMap = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+bVara = weekdayMap[d.getDay()];
+bDate = d.getDate();
+
 
   // Set initial values
   let curH = getCurrentSlot(panchangData.hora).slot.planet;

@@ -1,15 +1,10 @@
 {
-  "id": "Gajasurve",
-  "name": "Gajasurve Personalised Clock",
-  "version": "0.01",
+  "id": "panchangclock",
+  "name": "Panchang Clock",
   "icon": "app.png",
-  "description": "Clock with Panchang Hora, Tithi & Vara",
-  "tags": "clock",
-  "supports": ["BANGLEJS2"],
-  "storage": [
-    { "name": "panchangclock.app.js", "url": "panchangclock.js" },
-    { "name": "panchang-2025.json", "url": "panchang-2025.json" },
-    { "name": "app.png", "url": "app.png" }
-  ]
+  "sortorder": 100,
+  "type": "clock",
+  "readme": "README.md",
+  "tags": "clock,panchang",
+  "description": "Shows Hora, Tithi & Vara with Panchang data"
 }
-

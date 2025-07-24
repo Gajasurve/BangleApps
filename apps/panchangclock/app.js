@@ -1,4 +1,5 @@
 const Storage = require("Storage");
+let json = require("Storage").readJSON("panchang-data.json", 1e4);
 
 let panchangData, nextTimeout;
 

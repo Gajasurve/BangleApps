@@ -1,9 +1,0 @@
-{
-  "id": "panchangclock",
-  "name": "Panchang Clock",
-  "icon": "app.png",
-  "sortorder": 100,
-  "type": "clock",
-  "tags": "clock,panchang",
-  "description": "Shows Hora, Tithi & Vara with Panchang data"
-}

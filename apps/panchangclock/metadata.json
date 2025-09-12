@@ -5,7 +5,7 @@
   "icon": "icon",
   "src": "app.js",
   "version": "0.01",
-  "description": "Daily Panchang clock with Hora, Sep 12 Tithi, using draw lines this time storage json fixed date adjusting sizes",
+  "description": "Daily Panchang clock with Hora, Sep 12 Tithi Main change , using draw lines this time storage json fixed date adjusting sizes",
   "tags": "clock,vedic,time",
   "supports": ["BANGLEJS2"],
   "storage": [

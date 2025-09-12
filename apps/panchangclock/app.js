@@ -1,27 +1,18 @@
 const Storage = require("Storage");
 
-let panchangData, nextTimeout;
+let panchangData, nextHoraTimeout, nextTithiTimeout;
 
-// Color helper for hora
-function horaColor(hora) {
-  if (["VE", "MO", "JUP"].includes(hora)) return "#00ff00";
-  if (["ME", "MA"].includes(hora)) return "#ffff00";
+// Helper to get color based on Hora planet
+function horaColor(planet) {
+  if (["VE", "MO", "JUP"].indexOf(planet) !== -1) return "#00ff00";
+  if (["ME", "MA"].indexOf(planet) !== -1) return "#ffff00";
   return "#ffffff";
 }
 
-// Local date in YYYY-MM-DD format
-function getTodayDateStr() {
-  let d = new Date();
-  return d.getFullYear() + "-" +
-         ("0" + (d.getMonth() + 1)).slice(-2) + "-" +
-         ("0" + d.getDate()).slice(-2);
-}
-
-// Load today's panchang data
+// Load Panchang data
 function loadTodayData() {
-  let today = getTodayDateStr();
-  let json = Storage.readJSON("panchang-2025.json", 1);
-
+  const today = new Date().toISOString().slice(0, 10);
+  const json = Storage.readJSON("panchang-2025.json", 1);
   if (!json || !json[today]) {
     g.clear();
     g.setFontAlign(0, 0);
@@ -29,48 +20,59 @@ function loadTodayData() {
     g.drawString("No Panchang data", g.getWidth() / 2, g.getHeight() / 2);
     return null;
   }
-
   return json[today];
 }
 
+// Get current slot from slot list
 function getCurrentSlot(slots) {
-  let now = new Date();
-  let cur = now.getHours() * 60 + now.getMinutes();
+  const now = new Date();
+  const curMin = now.getHours() * 60 + now.getMinutes();
   let idx = -1;
+
   for (let i = 0; i < slots.length; i++) {
-    let parts = slots[i].start.split(":").map(x => parseInt(x));
-    let t = parts[0] * 60 + parts[1];
-    if (t <= cur) idx = i;
+    const parts = slots[i].start.split(":");
+    const t = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    if (t <= curMin) idx = i;
   }
+
   if (idx === -1) idx = slots.length - 1;
-  return { idx, slot: slots[idx] };
+  return { idx: idx, slot: slots[idx] };
 }
 
-function scheduleNextChange(slots, handler) {
-  let now = new Date();
-  let curMin = now.getHours() * 60 + now.getMinutes();
-  let upcoming = slots
-    .map(s => {
-      let [h, m] = s.start.split(":").map(Number);
-      let t = h * 60 + m;
-      if (t <= curMin) t += 24 * 60;
-      return { timeMin: t, s };
-    })
-    .sort((a, b) => a.timeMin - b.timeMin)[0];
+// Schedule next change
+function scheduleNextChange(slots, handler, isHora) {
+  const now = new Date();
+  const curMin = now.getHours() * 60 + now.getMinutes();
 
-  let diff = (upcoming.timeMin - curMin) * 60 * 1000;
+  let upcoming = null;
+  for (let i = 0; i < slots.length; i++) {
+    const parts = slots[i].start.split(":");
+    let t = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    if (t <= curMin) t += 24 * 60; // handle wrap-around
+    const diff = t - curMin;
+    if (!upcoming || diff < upcoming.diff) {
+      upcoming = { diff: diff, slot: slots[i] };
+    }
+  }
 
-  if (nextTimeout) clearTimeout(nextTimeout);
-  nextTimeout = setTimeout(handler, diff + 500);
+  const timeout = upcoming.diff * 60 * 1000 + 500;
+  const oldTimeout = isHora ? nextHoraTimeout : nextTithiTimeout;
+  if (oldTimeout) clearTimeout(oldTimeout);
+
+  const tid = setTimeout(handler, timeout);
+  if (isHora) nextHoraTimeout = tid;
+  else nextTithiTimeout = tid;
 }
 
+// Globals
 let bHora = "", bTithi = "", bVara = "", bDate = 0;
 
+// Draw current time
 function drawTime() {
-  let now = new Date();
-  let hours = ("0" + now.getHours()).substr(-2);
-  let minutes = ("0" + now.getMinutes()).substr(-2);
-  let timeStr = hours + ":" + minutes;
+  const now = new Date();
+  const hours = ("0" + now.getHours()).substr(-2);
+  const minutes = ("0" + now.getMinutes()).substr(-2);
+  const timeStr = hours + ":" + minutes;
 
   g.reset();
   g.clearRect(0, 0, 176, 70);
@@ -80,6 +82,7 @@ function drawTime() {
   g.drawString(timeStr, 88, 35);
 }
 
+// Draw separators
 function drawSeparator() {
   g.setColor("#888888");
   g.drawLine(0, 70, 175, 70);
@@ -87,17 +90,19 @@ function drawSeparator() {
   g.drawLine(88, 132, 88, 176);
 }
 
+// Draw Tithi with wrapping
 function drawTithi() {
   g.setFont("Vector", 14);
   g.setFontAlign(-1, -1);
   g.setColor("#ffffff");
   g.clearRect(0, 70, 176, 132);
 
-  let words = bTithi.split(" ");
+  const words = bTithi.split(" ");
   let x = 2, y = 74;
   let line = "";
+
   for (let i = 0; i < words.length; i++) {
-    let test = line + words[i] + " ";
+    const test = line + words[i] + " ";
     if (g.stringWidth(test) > 172) {
       g.drawString(line, x, y);
       y += 16;
@@ -109,9 +114,9 @@ function drawTithi() {
   g.drawString(line, x, y);
 }
 
+// Draw Hora
 function drawHora() {
   g.clearRect(0, 132, 176, 176);
-
   g.setFont("Vector", 22);
   g.setFontAlign(0, 0);
   g.setColor(horaColor(bHora));
@@ -132,23 +137,24 @@ function redrawAll() {
   drawHora();
 }
 
+// Update hora
 function updateHora() {
-  let cur = getCurrentSlot(panchangData.hora);
+  const cur = getCurrentSlot(panchangData.hora);
   bHora = cur.slot.planet;
-  console.log("Updated Hora:", bHora);
   Bangle.buzz([100, 50, 100]);
   redrawAll();
-  scheduleNextChange(panchangData.hora, updateHora);
+  scheduleNextChange(panchangData.hora, updateHora, true);
 }
 
+// Update tithi
 function updateTithi() {
-  let cur = getCurrentSlot(panchangData.tithi);
+  const cur = getCurrentSlot(panchangData.tithi);
   bTithi = cur.slot.name + " - " + cur.slot.type;
-  console.log("Updated Tithi:", bTithi);
   redrawAll();
-  scheduleNextChange(panchangData.tithi, updateTithi);
+  scheduleNextChange(panchangData.tithi, updateTithi, false);
 }
 
+// Initialize
 function init() {
   Bangle.loadWidgets();
   Bangle.drawWidgets();
@@ -159,36 +165,30 @@ function init() {
   panchangData = loadTodayData();
   if (!panchangData) return;
 
-  let d = new Date();
+  const now = new Date();
   const weekdayMap = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
-  bVara = panchangData.vara?.lord || weekdayMap[d.getDay()];
-  bDate = d.getDate();
+  bVara = (panchangData.vara && panchangData.vara.lord) || weekdayMap[now.getDay()];
+  bDate = now.getDate();
 
-  let curH = getCurrentSlot(panchangData.hora).slot.planet;
-  let curT = getCurrentSlot(panchangData.tithi);
+  const curH = getCurrentSlot(panchangData.hora).slot.planet;
+  const curT = getCurrentSlot(panchangData.tithi);
   bHora = curH;
   bTithi = curT.slot.name + " - " + curT.slot.type;
 
   redrawAll();
 
-  scheduleNextChange(panchangData.hora, updateHora);
-  scheduleNextChange(panchangData.tithi, updateTithi);
+  scheduleNextChange(panchangData.hora, updateHora, true);
+  scheduleNextChange(panchangData.tithi, updateTithi, false);
 
   E.on("midnight", () => {
-    console.log("Midnight event triggered.");
-    let newData = loadTodayData();
-    if (newData) {
-      panchangData = newData;
-      bDate = new Date().getDate();
-      redrawAll();
-      scheduleNextChange(panchangData.hora, updateHora);
-      scheduleNextChange(panchangData.tithi, updateTithi);
-    } else {
-      console.log("No panchang data for the new day.");
-    }
+    panchangData = loadTodayData();
+    bDate = new Date().getDate();
+    redrawAll();
+    scheduleNextChange(panchangData.hora, updateHora, true);
+    scheduleNextChange(panchangData.tithi, updateTithi, false);
   });
 
-  setInterval(redrawAll, 60000); // redraw everything every minute
+  setInterval(drawTime, 60000);
   setWatch(() => load(), BTN1, { edge: "rising", repeat: false });
 }
 

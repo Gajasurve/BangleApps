@@ -1,5 +1,4 @@
 const Storage = require("Storage");
-// Panchang Clock App
 
 let panchangData, nextTimeout;
 
@@ -10,10 +9,19 @@ function horaColor(hora) {
   return "#ffffff";
 }
 
-// Load today's panchang data from storage
+// Local date in YYYY-MM-DD format
+function getTodayDateStr() {
+  let d = new Date();
+  return d.getFullYear() + "-" +
+         ("0" + (d.getMonth() + 1)).slice(-2) + "-" +
+         ("0" + d.getDate()).slice(-2);
+}
+
+// Load today's panchang data
 function loadTodayData() {
-  let today = new Date().toISOString().slice(0, 10);
-  let json = require("Storage").readJSON("panchang-2025.json", 1);
+  let today = getTodayDateStr();
+  let json = Storage.readJSON("panchang-2025.json", 1);
+
   if (!json || !json[today]) {
     g.clear();
     g.setFontAlign(0, 0);
@@ -21,6 +29,7 @@ function loadTodayData() {
     g.drawString("No Panchang data", g.getWidth() / 2, g.getHeight() / 2);
     return null;
   }
+
   return json[today];
 }
 
@@ -42,13 +51,15 @@ function scheduleNextChange(slots, handler) {
   let curMin = now.getHours() * 60 + now.getMinutes();
   let upcoming = slots
     .map(s => {
-      let [h, m] = s.start.split(":" ).map(Number);
+      let [h, m] = s.start.split(":").map(Number);
       let t = h * 60 + m;
       if (t <= curMin) t += 24 * 60;
       return { timeMin: t, s };
     })
     .sort((a, b) => a.timeMin - b.timeMin)[0];
+
   let diff = (upcoming.timeMin - curMin) * 60 * 1000;
+
   if (nextTimeout) clearTimeout(nextTimeout);
   nextTimeout = setTimeout(handler, diff + 500);
 }
@@ -124,6 +135,7 @@ function redrawAll() {
 function updateHora() {
   let cur = getCurrentSlot(panchangData.hora);
   bHora = cur.slot.planet;
+  console.log("Updated Hora:", bHora);
   Bangle.buzz([100, 50, 100]);
   redrawAll();
   scheduleNextChange(panchangData.hora, updateHora);
@@ -132,6 +144,7 @@ function updateHora() {
 function updateTithi() {
   let cur = getCurrentSlot(panchangData.tithi);
   bTithi = cur.slot.name + " - " + cur.slot.type;
+  console.log("Updated Tithi:", bTithi);
   redrawAll();
   scheduleNextChange(panchangData.tithi, updateTithi);
 }
@@ -162,15 +175,20 @@ function init() {
   scheduleNextChange(panchangData.tithi, updateTithi);
 
   E.on("midnight", () => {
-    panchangData = loadTodayData();
-    bDate = new Date().getDate();
-    redrawAll();
-    scheduleNextChange(panchangData.hora, updateHora);
-    scheduleNextChange(panchangData.tithi, updateTithi);
+    console.log("Midnight event triggered.");
+    let newData = loadTodayData();
+    if (newData) {
+      panchangData = newData;
+      bDate = new Date().getDate();
+      redrawAll();
+      scheduleNextChange(panchangData.hora, updateHora);
+      scheduleNextChange(panchangData.tithi, updateTithi);
+    } else {
+      console.log("No panchang data for the new day.");
+    }
   });
 
-  setInterval(drawTime, 60000);
-
+  setInterval(redrawAll, 60000); // redraw everything every minute
   setWatch(() => load(), BTN1, { edge: "rising", repeat: false });
 }
 

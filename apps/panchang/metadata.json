@@ -1,0 +1,19 @@
+{
+  "id": "panchang",
+  "name": "Panchang Clock",
+  "shortName": "Panchang",
+  "version": "0.01",
+  "description": "Hindu Panchang watchface showing time, date, tithi, next Ekadashi, and daily Vishnu Sahasranama name. Battery optimized with hourly vibration alerts.",
+  "icon": "panchang.png",
+  "type": "clock",
+  "tags": "clock,panchang,hindu,vedic,calendar,tithi,ekadashi,vishnu",
+  "interface": "interface.html",
+  "readme": "README.md",
+  "storage": [
+    {"name":"panchang.app.js","url":"app.js"},
+    {"name":"panchang.img","url":"panchang.img","evaluate":true},
+    {"name":"panchang-2025.json","url":"panchang-data.json","evaluate":true},
+    {"name":"vishnu-1000.json","url":"vishnu-names.json","evaluate":true}
+  ],
+  "data": "panchang-2025.json,vishnu-1000.json"
+}

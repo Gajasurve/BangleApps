@@ -3,11 +3,11 @@
   "name": "Panchang Clock",
   "shortName": "Panchang",
   "version": "0.01",
-  "description": "Hindu Panchang watchface showing time, date, tithi, next Ekadashi, and daily Vishnu Sahasranama name. Battery optimized with hourly vibration alerts.",
+  "description": "Hindu Panchang watchface showing time, date, tithi, next Ekadashi, and daily Vishnu Sahasranama name. Battery optimized with hourly vibration alerts. Data for Hyderabad, India.",
   "icon": "panchang.png",
   "type": "clock",
   "tags": "clock,panchang,hindu,vedic,calendar,tithi,ekadashi,vishnu",
-  "interface": "interface.html",
+  "supports": ["BANGLEJS2"],
   "readme": "README.md",
   "storage": [
     {"name":"panchang.app.js","url":"app.js"},

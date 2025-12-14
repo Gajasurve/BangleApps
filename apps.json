@@ -8198,26 +8198,25 @@
 }
 ,
 {
-  "id": "panchang",
-  "name": "Panchang Clock",
-  "shortName": "Panchang",
+  "id": "vedic",
+  "name": "Vedic Panchang Clock",
+  "shortName": "Vedic",
   "version": "0.01",
-  "description": "Hindu Panchang watchface showing time, date, tithi, next Ekadashi, and daily Vishnu Sahasranama name. Battery optimized with hourly vibration alerts.",
-  "icon": "panchang.png",
+  "description": "Hindu Panchang watchface showing time, date, masa, tithi with paksha and nature, next Ekadashi countdown, and daily Vishnu Sahasranama name. Battery optimized (3-5 days) with hourly vibration alerts. Location: Hyderabad, India.",
+  "icon": "vedic.png",
   "type": "clock",
   "tags": "clock,panchang,hindu,vedic,calendar,tithi,ekadashi,vishnu",
   "supports": ["BANGLEJS2"],
-  "interface": "interface.html",
   "readme": "README.md",
   "storage": [
-    {"name":"panchang.app.js","url":"app.js"},
-    {"name":"panchang.img","url":"panchang.img","evaluate":true},
-    {"name":"panchang-2025.json","url":"panchang-data.json","evaluate":true},
-    {"name":"vishnu-1000.json","url":"vishnu-names.json","evaluate":true}
+    {"name":"vedic.app.js","url":"app.js"},
+    {"name":"vedic.img","url":"vedic-icon.js","evaluate":true},
+    {"name":"vedic-data.json","url":"vedic-data.json","evaluate":true},
+    {"name":"vedic-names.json","url":"vedic-names.json","evaluate":true}
   ],
-   "data": [
-    {"name":"panchang-2025.json"},
-    {"name":"vishnu-1000.json"}
+  "data": [
+    {"name":"vedic-data.json"},
+    {"name":"vedic-names.json"}
   ]
 }
 ,
@@ -13687,4 +13686,5 @@
     {"name":"xxlmessage.img","url":"app-icon.js","evaluate":true}
   ]
 }]
+
 

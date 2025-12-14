@@ -8215,7 +8215,10 @@
     {"name":"panchang-2025.json","url":"panchang-data.json","evaluate":true},
     {"name":"vishnu-1000.json","url":"vishnu-names.json","evaluate":true}
   ],
-  "data": "panchang-2025.json,vishnu-1000.json"
+   "data": [
+    {"name":"panchang-2025.json"},
+    {"name":"vishnu-1000.json"}
+  ]
 }
 ,
 {
@@ -13684,3 +13687,4 @@
     {"name":"xxlmessage.img","url":"app-icon.js","evaluate":true}
   ]
 }]
+

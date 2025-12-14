@@ -1,6 +1,6 @@
-// Bangle.js 2 Panchang Watch Face - Final Version
-// Battery optimized, clean design
-// Features: Time, Date, Tithi, Next Ekadashi, Vishnu Sahasranama name
+// Vedic Panchang Clock for Bangle.js 2
+// Battery optimized Hindu calendar watchface
+// Shows: Time, Date, Masa, Tithi, Ekadashi, Vishnu Sahasranama
 
 const Storage = require("Storage");
 
@@ -9,32 +9,27 @@ let tithiTimeout;
 let currentVishnu = "Vishvam";
 let currentMasa = "Margashirsha";
 
-// Sample panchang data for testing (will be replaced with real data from JSON)
 const SAMPLE_DATA = {
   tithi: [
-    { start: "00:00", name: "Panchami", type: "Shukla", nature: "Purna" },
-    { start: "14:30", name: "Saptami", type: "Krishna", nature: "Bhadra" }
+    { start: "00:00", name: "Panchami", type: "Shukla", nature: "Prn" }
   ],
-  vara: { lord: "SA" },
   masa: "Margashirsha"
 };
 
-// Colors
 const COLORS = {
   widget: "#FFFFFF",
-  masa: "#FFA500",      // Orange
-  time: "#FF9933",      // Saffron
-  date: "#FFFFFF",      // White
-  tithi: "#FFFFFF",     // White
-  vishnu: "#FFD700",    // Golden
-  ekTop: "#FF6B6B",     // Red
-  ekRight: "#4ECDC4",   // Cyan
-  ekBottom: "#FFD93D",  // Yellow
-  ekLeft: "#95E1D3",    // Green
-  ekNumber: "#FFFFFF"   // White number
+  masa: "#FFA500",
+  time: "#FF9933",
+  date: "#FFFFFF",
+  tithi: "#FFFFFF",
+  vishnu: "#FFD700",
+  ekTop: "#FF6B6B",
+  ekRight: "#4ECDC4",
+  ekBottom: "#FFD93D",
+  ekLeft: "#95E1D3",
+  ekNumber: "#FFFFFF"
 };
 
-// Tithi name to number mapping
 const TITHI_NUM = {
   "Pratipada": 1, "Dwitiya": 2, "Tritiya": 3, "Chaturthi": 4,
   "Panchami": 5, "Shashthi": 6, "Saptami": 7, "Ashtami": 8,
@@ -42,18 +37,17 @@ const TITHI_NUM = {
   "Trayodashi": 13, "Chaturdashi": 14, "Purnima": 15, "Amavasya": 30
 };
 
-// Tithi nature mapping based on number
 const TITHI_NATURE = {
-  1: "Nan", 6: "Nan", 11: "Nan",  // Nanda
-  2: "Bhd", 7: "Bhd", 12: "Bhd",  // Bhadra
-  3: "Jay", 8: "Jay", 13: "Jay",  // Jaya
-  4: "Rkt", 9: "Rkt", 14: "Rkt",  // Rikta
-  5: "Prn", 10: "Prn", 15: "Prn", 30: "Prn"  // Purna
+  1: "Nan", 6: "Nan", 11: "Nan",
+  2: "Bhd", 7: "Bhd", 12: "Bhd",
+  3: "Jay", 8: "Jay", 13: "Jay",
+  4: "Rkt", 9: "Rkt", 14: "Rkt",
+  5: "Prn", 10: "Prn", 15: "Prn", 30: "Prn"
 };
 
 function loadTodayData() {
   let today = new Date().toISOString().slice(0, 10);
-  let json = Storage.readJSON("panchang-2025.json", 1);
+  let json = Storage.readJSON("vedic-data.json", 1);
   
   if (!json || !json[today]) {
     return SAMPLE_DATA;
@@ -110,61 +104,65 @@ function findNextEkadashi(tithiSlots) {
       }
     }
   }
-  
-  // Check future days in panchang data
-  // For now, return sample value
-  // TODO: Implement proper multi-day lookup
   return 5;
 }
 
 function formatTithi(slot) {
   let paksha = slot.type.charAt(0).toUpperCase();
   let num = TITHI_NUM[slot.name] || "?";
-  
-  // Get nature from mapping if not provided
   let nature = slot.nature || TITHI_NATURE[num] || "---";
   if (nature.length > 3) nature = nature.substring(0, 3);
-  
   return paksha + num + "(" + nature + ")";
 }
 
 function getVishnuNameOfDay() {
-  // Get day of year (1-365/366)
   let now = new Date();
   let start = new Date(now.getFullYear(), 0, 0);
   let diff = now - start;
   let oneDay = 1000 * 60 * 60 * 24;
   let dayOfYear = Math.floor(diff / oneDay);
   
-  // Load Vishnu names from storage
-  let names = Storage.readJSON("vishnu-1000.json", 1);
+  let names = Storage.readJSON("vedic-names.json", 1);
   if (!names || !Array.isArray(names)) {
-    return currentVishnu; // Fallback to current
+    return currentVishnu;
   }
   
-  // Cycle through 1000 names using day of year
   let index = (dayOfYear - 1) % names.length;
   return names[index];
 }
 
-// Vibrate watch on 30 min and hour marks
-function setupVibrationAlerts() {
-  setInterval(() => {
-    let now = new Date();
-    let min = now.getMinutes();
+function scheduleNextVibration() {
+  let now = new Date();
+  let minInHour = now.getMinutes();
+  let nextVibMin;
+  
+  if (minInHour < 30) {
+    nextVibMin = 30 - minInHour;
+  } else {
+    nextVibMin = 60 - minInHour;
+  }
+  
+  let msUntilVib = nextVibMin * 60 * 1000;
+  
+  setTimeout(() => {
+    let m = new Date().getMinutes();
     
-    if (min === 0) {
-      // On the hour - longer vibration
+    if (m === 0) {
       Bangle.buzz(200, 0.5).then(() => {
         return new Promise(resolve => setTimeout(resolve, 100));
       }).then(() => {
         return Bangle.buzz(200, 0.5);
       });
-    } else if (min === 30) {
-      // On 30 minutes - single short vibration
+    } else if (m === 30) {
       Bangle.buzz(150, 0.4);
     }
-  }, 60000); // Check every minute
+    
+    scheduleNextVibration();
+  }, msUntilVib);
+}
+
+function setupVibrationAlerts() {
+  scheduleNextVibration();
 }
 
 function drawWidgets() {
@@ -199,7 +197,6 @@ function drawTimeAndDate() {
   g.setColor("#000000");
   g.fillRect(0, 60, 176, 110);
   
-  // TIME
   let h = ("0" + now.getHours()).substr(-2);
   let m = ("0" + now.getMinutes()).substr(-2);
   let timeStr = h + ":" + m;
@@ -209,7 +206,6 @@ function drawTimeAndDate() {
   g.setFontAlign(0, 0);
   g.drawString(timeStr, 88, 74);
   
-  // DATE
   let d = new Date();
   let day = d.getDate();
   let suffix = "th";
@@ -230,7 +226,6 @@ function drawTithiAndEkadashi() {
   g.setColor("#000000");
   g.fillRect(0, 115, 176, 145);
   
-  // Tithi
   let tithiCur = getCurrentSlot(panchangData.tithi);
   let tithiText = formatTithi(tithiCur.slot);
   
@@ -239,14 +234,12 @@ function drawTithiAndEkadashi() {
   g.setFontAlign(-1, 0);
   g.drawString(tithiText, 10, 130);
   
-  // Ekadashi box
   let daysToEkadashi = findNextEkadashi(panchangData.tithi);
   let boxX = 135, boxY = 117, boxW = 32, boxH = 26;
   
   g.setColor("#000000");
   g.fillRect(boxX, boxY, boxX + boxW, boxY + boxH);
   
-  // 4-color border
   g.setColor(COLORS.ekTop);
   g.fillRect(boxX, boxY, boxX + boxW, boxY + 2);
   
@@ -259,7 +252,6 @@ function drawTithiAndEkadashi() {
   g.setColor(COLORS.ekLeft);
   g.fillRect(boxX, boxY, boxX + 2, boxY + boxH);
   
-  // Number
   g.setColor(COLORS.ekNumber);
   g.setFont("Vector", 16);
   g.setFontAlign(0, 0);
@@ -295,44 +287,35 @@ function updateTithi() {
 function init() {
   g.clear();
   
-  // Battery-optimized settings
   Bangle.setOptions({ 
     wakeOnTwist: true,
-    twistThreshold: 600,    // Sensitive twist
+    twistThreshold: 600,
     twistMaxY: -600,
     twistTimeout: 1000
   });
   
-  // Screen off after 5 seconds to save battery
   Bangle.setLCDTimeout(5);
-  
   Bangle.setUI();
 
-  // Load panchang data
   panchangData = loadTodayData();
   
   if (panchangData.masa) {
     currentMasa = panchangData.masa;
   }
   
-  // Load Vishnu name for today
   currentVishnu = getVishnuNameOfDay();
   
   redrawAll();
   
-  // Setup auto-update when tithi changes
   tithiTimeout = scheduleNextChange(panchangData.tithi, updateTithi);
   
-  // Update time and widgets every minute (battery efficient)
   setInterval(() => {
     drawWidgets();
     drawTimeAndDate();
   }, 60000);
   
-  // Setup vibration alerts for 30 min and hour
   setupVibrationAlerts();
   
-  // Update at midnight
   E.on("midnight", () => {
     panchangData = loadTodayData();
     if (panchangData.masa) currentMasa = panchangData.masa;
@@ -340,9 +323,7 @@ function init() {
     redrawAll();
   });
   
-  // Exit on button press
   setWatch(() => load(), BTN1, { edge: "rising", repeat: false });
 }
 
-// Start the watchface
 init();

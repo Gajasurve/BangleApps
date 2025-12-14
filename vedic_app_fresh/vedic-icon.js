@@ -1,9 +1,6 @@
-// Panchang App Icon - Om symbol
-// 48x48 pixels, 1-bit
+// Vedic App Icon - Om symbol
 {
   width : 48, height : 48, bpp : 1,
   transparent : 0,
   buffer : require("heatshrink").decompress(atob("AH4A/AH4CkAKQFIA0gJSApASkBIH6ApAGgBSAtAWkLaFpC0haQtIWkLSFpC0haQtIWkLaAtAGkBKH4A5AH4A/"))
 }
-// This creates a simple Om (ॐ) symbol icon
-// For a proper icon, use http://www.espruino.com/Image+Converter

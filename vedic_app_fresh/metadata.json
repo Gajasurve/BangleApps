@@ -1,0 +1,22 @@
+{
+  "id": "vedic",
+  "name": "Vedic Panchang Clock",
+  "shortName": "Vedic",
+  "version": "0.01",
+  "description": "Hindu Panchang watchface showing time, date, masa, tithi with paksha and nature, next Ekadashi countdown, and daily Vishnu Sahasranama name. Battery optimized (3-5 days) with hourly vibration alerts. Location: Hyderabad, India.",
+  "icon": "vedic.png",
+  "type": "clock",
+  "tags": "clock,panchang,hindu,vedic,calendar,tithi,ekadashi,vishnu",
+  "supports": ["BANGLEJS2"],
+  "readme": "README.md",
+  "storage": [
+    {"name":"vedic.app.js","url":"app.js"},
+    {"name":"vedic.img","url":"vedic-icon.js","evaluate":true},
+    {"name":"vedic-data.json","url":"vedic-data.json","evaluate":true},
+    {"name":"vedic-names.json","url":"vedic-names.json","evaluate":true}
+  ],
+  "data": [
+    {"name":"vedic-data.json"},
+    {"name":"vedic-names.json"}
+  ]
+}

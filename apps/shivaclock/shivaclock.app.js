@@ -168,6 +168,7 @@ function onMinute() {
 /* -------------------- INIT -------------------- */
 
 function init() {
+  Bangle.setUI("clock");
   Bangle.setOptions({
     wakeOnTwist: true,
     twistThreshold: 1500,

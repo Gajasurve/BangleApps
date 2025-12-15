@@ -8207,8 +8207,8 @@
   "supports": ["BANGLEJS2"],
   "storage": [
     { "name": "shivaclock.app.js", "url": "shivaclock.app.js" },
-    { "name": "vedic-data.json", "url": "vedic-data.json" },
-    { "name": "vedic-names.json", "url": "vedic-names.json" }
+    { "name": "vedic-data.json", "url": "vedic-data.json", "storageFile": true },
+    { "name": "vedic-names.json", "url": "vedic-names.json", "storageFile": true }
   ]
 }
 ,
@@ -13678,6 +13678,7 @@
     {"name":"xxlmessage.img","url":"app-icon.js","evaluate":true}
   ]
 }]
+
 
 
 

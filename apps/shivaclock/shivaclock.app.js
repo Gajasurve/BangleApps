@@ -30,12 +30,12 @@ const TITHI_NATURE = {
 
 function loadDayData(date) {
   let key = date.toISOString().slice(0,10);
-  let json = Storage.readJSON("shivaclock/vedic-data.json",1);
+  let json = Storage.readJSON("vedic-data.json",1);
   return (json && json[key]) ? json[key] : null;
 }
 
 function getVishnuNameOfDay() {
-  let names = Storage.readJSON("shivaclock/vedic-names.json",1);
+  let names = Storage.readJSON("vedic-names.json",1);
   if (!names || !names.length) return "";
   let day = Math.floor(Date.now()/86400000);
   return names[day % names.length];

@@ -76,28 +76,23 @@ function getHora() {
   let sun = loadSunriseData();
   if (!sun || !sun[key]) return "--";
 
-  // Sunrise in seconds
-  let srSec = sun[key].sr * 60;
+  let srSec = sun[key].sr;
 
-  // Current time in seconds
   let nowSec =
-    now.getHours() * 3600 +
-    now.getMinutes() * 60 +
+    now.getHours()*3600 +
+    now.getMinutes()*60 +
     now.getSeconds();
 
-  // Seconds since sunrise (wrap across midnight)
   let delta = nowSec - srSec;
   if (delta < 0) delta += 86400;
 
-  // Fixed 60-minute Hora = 3600 seconds
   let horaCount = Math.floor(delta / 3600);
   if (horaCount > 23) horaCount = 23;
 
-  let lord = WEEKDAY_LORD[now.getDay()];
-  let startIdx = PLANETS.indexOf(lord);
-
+  let startIdx = PLANETS.indexOf(WEEKDAY_LORD[now.getDay()]);
   return PLANETS[(startIdx + horaCount) % 7];
 }
+
 
 /* -------------------- EKADASHI -------------------- */
 

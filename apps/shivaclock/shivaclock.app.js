@@ -1,13 +1,16 @@
-// Shiva Clock – Panchang Watchface
+// Shiva Clock – Panchang Watchface with Hora (Hyderabad)
 // Bangle.js 2
 
 const Storage = require("Storage");
 
 let panchangData;
+let sunriseData;
 let currentMasa = "";
 let currentVishnu = "";
+let currentHora = "--";
 let ekadashiIn = "--";
 let lastMinute = -1;
+let cachedDateKey = "";
 
 /* -------------------- CONSTANTS -------------------- */
 
@@ -26,20 +29,26 @@ const TITHI_NATURE = {
   5:"PRN",10:"PRN",15:"PRN",30:"PRN"
 };
 
-/* -------------------- DATA (FIXED) -------------------- */
+// Hora constants
+const PLANETS = ["SA","JU","MA","SU","VE","ME","MO"];
+const WEEKDAY_LORD = ["SU","MO","MA","ME","JU","VE","SA"];
 
-// FIX 1: use LOCAL date, not UTC
+/* -------------------- DATE KEY -------------------- */
+
+function getDateKey(d) {
+  return d.getFullYear() + "-" +
+    ("0" + (d.getMonth() + 1)).slice(-2) + "-" +
+    ("0" + d.getDate()).slice(-2);
+}
+
+/* -------------------- DATA -------------------- */
+
 function loadDayData(date) {
-  let y = date.getFullYear();
-  let m = ("0" + (date.getMonth() + 1)).slice(-2);
-  let d = ("0" + date.getDate()).slice(-2);
-  let key = y + "-" + m + "-" + d;
-
   let json = Storage.readJSON("vedic-data.json", 1);
+  let key = getDateKey(date);
   return (json && json[key]) ? json[key] : null;
 }
 
-// FIX 2: use LOCAL day-of-year
 function getVishnuNameOfDay() {
   let names = Storage.readJSON("vedic-names.json", 1);
   if (!names || !names.length) return "";
@@ -47,8 +56,42 @@ function getVishnuNameOfDay() {
   let today = new Date();
   let start = new Date(today.getFullYear(), 0, 1);
   let dayOfYear = Math.floor((today - start) / 86400000);
-
   return names[dayOfYear % names.length];
+}
+
+function loadSunriseData() {
+  if (!sunriseData)
+    sunriseData = Storage.readJSON("sunrise.json", 1);
+  return sunriseData;
+}
+
+/* -------------------- HORA -------------------- */
+
+function getHora() {
+  let now = new Date();
+  let key = getDateKey(now);
+  let sun = loadSunriseData();
+  if (!sun || !sun[key]) return "--";
+
+  let sr = sun[key].sr;
+  let ss = sun[key].ss;
+
+  let min = now.getHours() * 60 + now.getMinutes();
+  let isDay = (min >= sr && min < ss);
+
+  let dayLen = ss - sr;
+  let nightLen = 1440 - dayLen;
+  let horaLen = isDay ? (dayLen / 12) : (nightLen / 12);
+  let base = isDay ? sr : ss;
+
+  let idx = Math.floor((min - base) / horaLen);
+  if (idx < 0) idx = 0;
+  if (idx > 11) idx = 11;
+
+  let lord = WEEKDAY_LORD[now.getDay()];
+  let startIdx = PLANETS.indexOf(lord);
+
+  return PLANETS[(startIdx + idx) % 7];
 }
 
 /* -------------------- EKADASHI -------------------- */
@@ -87,7 +130,7 @@ function getCurrentTithi(slots) {
 }
 
 function formatTithi(slot) {
-  let paksha = slot.type[0].toUpperCase(); // S / K
+  let paksha = slot.type[0].toUpperCase();
   let num = TITHI_NUM[slot.name] || "?";
   let nat = TITHI_NATURE[num] || "---";
   return paksha + num + "(" + nat + ")";
@@ -97,18 +140,20 @@ function formatTithi(slot) {
 
 function drawAll() {
   if (!Bangle.isLCDOn()) return;
-
   g.clear();
 
-  // Battery + steps
+  // Top bar: Battery | Hora | Steps
   g.setFont("6x8", 2);
   g.setColor("#FFFFFF");
+
   g.setFontAlign(-1, -1);
   g.drawString(E.getBattery() + "%", 4, 2);
 
-  let steps = Bangle.getHealthStatus("day").steps || 0;
+  g.setFontAlign(0, -1);
+  g.drawString(currentHora, 88, 2);
+
   g.setFontAlign(1, -1);
-  g.drawString(steps, 172, 2);
+  g.drawString(Bangle.getHealthStatus("day").steps || 0, 172, 2);
 
   // Masa
   g.setColor("#FFA500");
@@ -176,6 +221,7 @@ function onMinute() {
       Bangle.buzz(120, 0.4);
     }
 
+    currentHora = getHora();
     drawAll();
   }
 }
@@ -194,23 +240,28 @@ function init() {
 
   Bangle.setLCDTimeout(10);
 
-  panchangData = loadDayData(new Date());
+  let now = new Date();
+  cachedDateKey = getDateKey(now);
+
+  panchangData = loadDayData(now);
   currentMasa = panchangData ? panchangData.masa : "";
   currentVishnu = getVishnuNameOfDay();
+  currentHora = getHora();
   ekadashiIn = findNextEkadashi();
 
   drawAll();
   setInterval(onMinute, 60000);
 
   E.on("midnight", () => {
-    panchangData = loadDayData(new Date());
+    let d = new Date();
+    cachedDateKey = getDateKey(d);
+    panchangData = loadDayData(d);
     currentMasa = panchangData ? panchangData.masa : "";
     currentVishnu = getVishnuNameOfDay();
     ekadashiIn = findNextEkadashi();
+    currentHora = getHora();
     drawAll();
   });
-
-  Bangle.on("kill", () => clearInterval());
 }
 
 init();

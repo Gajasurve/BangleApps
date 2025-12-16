@@ -76,29 +76,18 @@ function getHora() {
   let sun = loadSunriseData();
   if (!sun || !sun[key]) return "--";
 
+  // Sunrise in minutes
   let sr = sun[key].sr;
-  let ss = sun[key].ss;
 
+  // Current time in minutes
   let min = now.getHours() * 60 + now.getMinutes();
 
-  let dayLen = ss - sr;
-  let nightLen = 1440 - dayLen;
+  // Minutes since sunrise (wrap across midnight)
+  let delta = min - sr;
+  if (delta < 0) delta += 1440;
 
-  let horaLenDay = dayLen / 12;
-  let horaLenNight = nightLen / 12;
-
-  let horaCount;
-
-  if (min >= sr && min < ss) {
-    // Day hora: count from sunrise
-    horaCount = Math.floor((min - sr) / horaLenDay);
-  } else {
-    // Night hora: continue after day horas
-    let nightMin = (min >= ss) ? (min - ss) : (min + 1440 - ss);
-    horaCount = 12 + Math.floor(nightMin / horaLenNight);
-  }
-
-  if (horaCount < 0) horaCount = 0;
+  // Fixed 60-minute Hora (Panchāṅga style)
+  let horaCount = Math.floor(delta / 60);
   if (horaCount > 23) horaCount = 23;
 
   let lord = WEEKDAY_LORD[now.getDay()];

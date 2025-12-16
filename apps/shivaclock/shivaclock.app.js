@@ -76,18 +76,21 @@ function getHora() {
   let sun = loadSunriseData();
   if (!sun || !sun[key]) return "--";
 
-  // Sunrise in minutes
-  let sr = sun[key].sr;
+  // Sunrise in seconds
+  let srSec = sun[key].sr * 60;
 
-  // Current time in minutes
-  let min = now.getHours() * 60 + now.getMinutes();
+  // Current time in seconds
+  let nowSec =
+    now.getHours() * 3600 +
+    now.getMinutes() * 60 +
+    now.getSeconds();
 
-  // Minutes since sunrise (wrap across midnight)
-  let delta = min - sr;
-  if (delta < 0) delta += 1440;
+  // Seconds since sunrise (wrap across midnight)
+  let delta = nowSec - srSec;
+  if (delta < 0) delta += 86400;
 
-  // Fixed 60-minute Hora (Panchāṅga style)
-  let horaCount = Math.floor(delta / 60);
+  // Fixed 60-minute Hora = 3600 seconds
+  let horaCount = Math.floor(delta / 3600);
   if (horaCount > 23) horaCount = 23;
 
   let lord = WEEKDAY_LORD[now.getDay()];
@@ -217,12 +220,16 @@ function onMinute() {
   if (m !== lastMinute) {
     lastMinute = m;
 
-    if (m === 0) {
-      Bangle.buzz(200, 0.8);
-      setTimeout(() => Bangle.buzz(200, 0.8), 120);
-    } else if (m === 30) {
-      Bangle.buzz(120, 0.4);
-    }
+   if (m === 0) {
+  // STRONG hour vibration: 3 pulses
+  Bangle.buzz(350, 1.0);
+  setTimeout(() => Bangle.buzz(350, 1.0), 450);
+  setTimeout(() => Bangle.buzz(350, 1.0), 900);
+} 
+else if (m === 30) {
+  // Medium half-hour vibration
+  Bangle.buzz(300, 0.9);
+}
 
     currentHora = getHora();
     drawAll();

@@ -29,9 +29,12 @@ const TITHI_NATURE = {
   5:"PRN",10:"PRN",15:"PRN",30:"PRN"
 };
 
-// Hora constants
+// Hora constants (Shastric order)
 const PLANETS = ["SA","JU","MA","SU","VE","ME","MO"];
 const WEEKDAY_LORD = ["SU","MO","MA","ME","JU","VE","SA"];
+
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 /* -------------------- DATE KEY -------------------- */
 
@@ -65,7 +68,7 @@ function loadSunriseData() {
   return sunriseData;
 }
 
-/* -------------------- HORA -------------------- */
+/* -------------------- HORA (FIXED) -------------------- */
 
 function getHora() {
   let now = new Date();
@@ -77,21 +80,31 @@ function getHora() {
   let ss = sun[key].ss;
 
   let min = now.getHours() * 60 + now.getMinutes();
-  let isDay = (min >= sr && min < ss);
 
   let dayLen = ss - sr;
   let nightLen = 1440 - dayLen;
-  let horaLen = isDay ? (dayLen / 12) : (nightLen / 12);
-  let base = isDay ? sr : ss;
 
-  let idx = Math.floor((min - base) / horaLen);
-  if (idx < 0) idx = 0;
-  if (idx > 11) idx = 11;
+  let horaLenDay = dayLen / 12;
+  let horaLenNight = nightLen / 12;
+
+  let horaCount;
+
+  if (min >= sr && min < ss) {
+    // Day hora: count from sunrise
+    horaCount = Math.floor((min - sr) / horaLenDay);
+  } else {
+    // Night hora: continue after day horas
+    let nightMin = (min >= ss) ? (min - ss) : (min + 1440 - ss);
+    horaCount = 12 + Math.floor(nightMin / horaLenNight);
+  }
+
+  if (horaCount < 0) horaCount = 0;
+  if (horaCount > 23) horaCount = 23;
 
   let lord = WEEKDAY_LORD[now.getDay()];
   let startIdx = PLANETS.indexOf(lord);
 
-  return PLANETS[(startIdx + idx) % 7];
+  return PLANETS[(startIdx + horaCount) % 7];
 }
 
 /* -------------------- EKADASHI -------------------- */
@@ -171,12 +184,13 @@ function drawAll() {
   g.setFontAlign(0, 0);
   g.drawString(time, 88, 70);
 
-  // Date
+  // Date + Day (e.g. 16 Dec Tue)
   g.setFont("6x8", 2);
   g.setColor("#FFFFFF");
   g.drawString(
     d.getDate() + " " +
-    ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()],
+    MONTHS[d.getMonth()] + " " +
+    DAYS[d.getDay()],
     88, 104
   );
 

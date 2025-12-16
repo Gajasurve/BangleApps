@@ -30,7 +30,7 @@ const TITHI_NATURE = {
 };
 
 // Hora constants (Shastric order)
-const PLANETS = ["SA","JU","MA","SU","VE","ME","MO"];
+const PLANETS = ["SU","VE","ME","MO","SA","JU","MA"];
 const WEEKDAY_LORD = ["SU","MO","MA","ME","JU","VE","SA"];
 
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];

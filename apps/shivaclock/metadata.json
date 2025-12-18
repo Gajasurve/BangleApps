@@ -1,15 +1,15 @@
 {
   "id": "shivaclock",
   "name": "Shiva Clock",
-  "version": "0.1",
-  "description": "G Minimal Panchang watchface with Masa, Tithi, Ekadashi countdown and Vishnu Sahasranama",
+  "version": "1.2.0",
   "type": "clock",
-  "tags": ["clock", "panchang", "vedic", "religion"],
-  "supports": ["BANGLEJS2"],
+  "icon": "app.png",
+  "description": "Advanced Panchang watchface with Hora, Nakshatra, Vishnu names and Nak",
   "storage": [
-    { "name": "shivaclock.app.js", "url": "shivaclock.app.js" },
-    { "name": "vedic-data.json", "url": "vedic-data.json" },
-    { "name": "vedic-names.json", "url": "vedic-names.json" }
+    {"name":"shivaclock.app.js", "url":"shivaclock.app.js"},
+    {"name":"vedic-data.json", "url":"vedic-data.json"},
+    {"name":"vedic-names.json", "url":"vedic-names.json"},
+    {"name":"sunrise.json", "url":"sunrise.json"},
+    {"name":"nakshatra.json", "url":"nakshatra.json"}
   ]
 }
-

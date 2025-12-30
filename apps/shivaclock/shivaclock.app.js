@@ -1,24 +1,25 @@
-// Shiva Clock – Panchang Watchface with Hora + Nakshatra + Vishnu Cycling
+// Shiva Clock – Panchang Watchface with Hora (Hyderabad)
 // Bangle.js 2
 
 const Storage = require("Storage");
 
-/* ------------ GLOBAL STATE ------------ */
+/* -------------------- GLOBAL STATE -------------------- */
 
 let panchangData;
 let sunriseData;
+let tithiSlots = null;
+let nakSlots = null;
 
 let currentMasa = "";
 let currentVishnu = "";
 let currentHora = "--";
 let currentNak = "";
-let showMasa = true;   // flip flag: masa ↔ nak each minute
-let lastMinute = -1;
 let ekadashiIn = "--";
 
+let lastMinute = -1;
 let cachedDateKey = "";
 
-/* ------------ CONSTANTS ------------ */
+/* -------------------- CONSTANTS -------------------- */
 
 const TITHI_NUM = {
   "Pratipada":1,"Dwitiya":2,"Tritiya":3,"Chaturthi":4,"Panchami":5,
@@ -35,50 +36,60 @@ const TITHI_NATURE = {
   5:"PRN",10:"PRN",15:"PRN",30:"PRN"
 };
 
-// Hora proper sequential list
 const PLANETS = ["SU","VE","ME","MO","SA","JU","MA"];
 const WEEKDAY_LORD = ["SU","MO","MA","ME","JU","VE","SA"];
 
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-/* ------------ DATE HELP ------------ */
+/* -------------------- DATE KEY -------------------- */
 
 function getDateKey(d) {
   return d.getFullYear() + "-" +
-    ("0" + (d.getMonth()+1)).slice(-2) + "-" +
-    ("0" + d.getDate()).slice(-2);
+    ("0"+(d.getMonth()+1)).slice(-2) + "-" +
+    ("0"+d.getDate()).slice(-2);
 }
 
-/* ------------ STREAMING JSON LOADERS ------------ */
+/* -------------------- DATA LOADERS -------------------- */
 
+// Masa only (small JSON – safe)
 function loadDayData(date) {
-  let json = Storage.readJSON("vedic-data.json", 1);
+  let json = Storage.readJSON("vedic-data.json",1);
   let key = getDateKey(date);
-  return json ? json[key] : null;
+  return (json && json[key]) ? json[key] : null;
 }
 
+// Vishnu names (tiny)
+function getVishnuNameOfDay() {
+  let names = Storage.readJSON("vedic-names.json",1);
+  if (!names || !names.length) return "";
+
+  let today = new Date();
+  let start = new Date(today.getFullYear(),0,1);
+  let dayOfYear = Math.floor((today-start)/86400000);
+  return names[dayOfYear % names.length];
+}
+
+// Sunrise cache
 function loadSunriseData() {
   if (!sunriseData)
-    sunriseData = Storage.readJSON("sunrise.json", 1);
+    sunriseData = Storage.readJSON("sunrise.json",1);
   return sunriseData;
 }
 
-/* ---- Safe streaming Nakshatra loader ---- */
+/* -------------------- STREAMING JSON LOADERS -------------------- */
 
-function loadDayNakshatra(dateKey) {
-  let file = require("Storage").read("nakshatra.json");
+function streamDayArray(filename, dateKey) {
+  let file = Storage.read(filename);
   if (!file) return null;
 
-  let search = '"' + dateKey + '"';
-  let pos = file.indexOf(search);
+  let pos = file.indexOf('"'+dateKey+'"');
   if (pos < 0) return null;
 
   let start = file.indexOf("[", pos);
   if (start < 0) return null;
 
   let depth = 0, end = start;
-
   while (end < file.length) {
     let c = file[end];
     if (c === "[") depth++;
@@ -88,77 +99,63 @@ function loadDayNakshatra(dateKey) {
     }
     end++;
   }
-
   if (depth !== 0) return null;
 
-  let chunk = file.slice(start, end + 1);
-  chunk = chunk.replace(/,\s*]$/, "]");
-
   try {
-    return JSON.parse(chunk);
+    return JSON.parse(file.slice(start,end+1));
   } catch(e) {
     return null;
   }
 }
 
-/* ------------ VISHNU NAME ------------ */
-
-function getVishnuNameOfDay() {
-  let names = Storage.readJSON("vedic-names.json", 1);
-  if (!names || !names.length) return "";
-  let now = new Date();
-  let start = new Date(now.getFullYear(),0,1);
-  let dayOfYear = Math.floor((now - start)/86400000);
-  return names[dayOfYear % names.length];
+function loadDayTithi(dateKey) {
+  return streamDayArray("tithi.json", dateKey);
 }
 
-/* ------------ HORA ------------ */
+function loadDayNak(dateKey) {
+  return streamDayArray("nakshatra.json", dateKey);
+}
+
+/* -------------------- HORA -------------------- */
 
 function getHora() {
   let now = new Date();
-  let dateKey = getDateKey(now);
+  let key = getDateKey(now);
   let sun = loadSunriseData();
-  if (!sun || !sun[dateKey]) return "--";
+  if (!sun || !sun[key]) return "--";
 
-  let srSec = sun[dateKey].sr;
+  let sr = sun[key].sr;
   let nowSec = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
-
-  let delta = nowSec - srSec;
+  let delta = nowSec - sr;
   if (delta < 0) delta += 86400;
 
-  let horaIndex = Math.floor(delta / 3600);
-  if (horaIndex > 23) horaIndex = 23;
-
-  let lord = WEEKDAY_LORD[now.getDay()];
-  let base = PLANETS.indexOf(lord);
-
-  return PLANETS[(base + horaIndex) % 7];
+  let horaCount = Math.floor(delta / 3600);
+  let startIdx = PLANETS.indexOf(WEEKDAY_LORD[now.getDay()]);
+  return PLANETS[(startIdx + horaCount) % 7];
 }
 
-/* ------------ NAKSHATRA ------------ */
+/* -------------------- EKADASHI -------------------- */
 
-function getCurrentNakFromSlots(slots) {
-  if (!slots || !slots.length) return "";
-  let now = new Date();
-  let nowMin = now.getHours()*60 + now.getMinutes();
+function findNextEkadashi() {
+  let base = new Date();
+  base.setHours(0,0,0,0);
 
-  let cur = slots[0];
-
-  for (let s of slots) {
-    let p = s.start.split(":");
-    let hm = (+p[0])*60 + (+p[1]);
-    if (hm <= nowMin) cur = s;
+  for (let i=0;i<=15;i++) {
+    let d = new Date(base.getTime());
+    d.setDate(base.getDate()+i);
+    let data = loadDayData(d);
+    if (!data || !data.tithi) continue;
+    for (let t of data.tithi)
+      if (t.name==="Ekadashi") return i;
   }
-  return cur.name;
+  return "--";
 }
 
-/* ------------ TITHI ------------ */
+/* -------------------- TITHI -------------------- */
 
-function getCurrentTithi(slots) {
-  let now = new Date();
-  let nowMin = now.getHours()*60 + now.getMinutes();
+function getCurrentSlot(slots) {
+  let nowMin = new Date().getHours()*60 + new Date().getMinutes();
   let cur = slots[0];
-
   for (let s of slots) {
     let p = s.start.split(":");
     let m = (+p[0])*60 + (+p[1]);
@@ -174,35 +171,21 @@ function formatTithi(slot) {
   return paksha + num + "(" + nat + ")";
 }
 
-/* ------------ EKADASHI ------------ */
+/* -------------------- NAKSHATRA -------------------- */
 
-function findNextEkadashi() {
-  let base = new Date();
-  base.setHours(0,0,0,0);
-
-  for (let i=0; i<=15; i++) {
-    let d = new Date(base);
-    d.setDate(base.getDate() + i);
-
-    let data = loadDayData(d);
-    if (!data || !data.tithi) continue;
-
-    for (let t of data.tithi)
-      if (t.name === "Ekadashi") return i;
-  }
-  return "--";
+function getCurrentNak(slots) {
+  return getCurrentSlot(slots).name;
 }
 
-/* ------------ DRAW ------------ */
+/* -------------------- DRAW -------------------- */
 
 function drawAll() {
   if (!Bangle.isLCDOn()) return;
-
   g.clear();
 
-  // Top Bar
   g.setFont("6x8",2);
   g.setColor("#FFFFFF");
+
   g.setFontAlign(-1,-1);
   g.drawString(E.getBattery()+"%",4,2);
 
@@ -212,134 +195,104 @@ function drawAll() {
   g.setFontAlign(1,-1);
   g.drawString(Bangle.getHealthStatus("day").steps||0,172,2);
 
-  // Masa OR Nak
-  g.setFont("6x8",2);
-  g.setFontAlign(0,-1);
   g.setColor("#FFA500");
-  g.drawString(showMasa?currentMasa:currentNak,88,22);
+  g.setFontAlign(0,-1);
+  g.drawString(currentMasa,88,22);
 
-  // Time
   let d=new Date();
-  let t=("0"+d.getHours()).slice(-2)+":"+
-        ("0"+d.getMinutes()).slice(-2);
-
   g.setFont("Vector",50);
-  g.setFontAlign(0,0);
   g.setColor("#FF9933");
-  g.drawString(t,88,70);
+  g.setFontAlign(0,0);
+  g.drawString(
+    ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2),
+    88,70
+  );
 
-  // Date + Day
   g.setFont("6x8",2);
   g.setColor("#FFFFFF");
   g.drawString(
-    d.getDate()+" "+
-    MONTHS[d.getMonth()]+" "+
-    DAYS[d.getDay()],
-    88,104);
+    d.getDate()+" "+MONTHS[d.getMonth()]+" "+DAYS[d.getDay()],
+    88,104
+  );
 
-  // Tithi
-  if (panchangData && panchangData.tithi) {
+  if (tithiSlots) {
     g.setFont("Vector",18);
     g.setFontAlign(-1,0);
-    g.setColor("#FFFFFF");
-    g.drawString(
-      formatTithi(getCurrentTithi(panchangData.tithi)),
-      6,135
-    );
+    g.drawString(formatTithi(getCurrentSlot(tithiSlots)),6,135);
   }
 
-  // Ekadashi box
   g.setColor("#000000");
   g.fillRect(128,120,175,152);
   g.setColor("#FFFFFF");
   g.setFont("Vector",18);
   g.setFontAlign(0,0);
-  g.drawString(ekadashiIn.toString(),151,134);
+  g.drawString(String(ekadashiIn),151,134);
   g.setFont("6x8",1);
   g.drawString("EKA",151,150);
 
-  // Vishnu
   g.setFont("6x8",2);
   g.setColor("#FFD700");
   g.setFontAlign(0,0);
   g.drawString(currentVishnu,88,168);
 }
 
-/* ------------ MINUTE TICK ------------ */
+/* -------------------- TICK -------------------- */
 
 function onMinute() {
-  let m = new Date().getMinutes();
-  if (m === lastMinute) return;
-  lastMinute = m;
+  let m=new Date().getMinutes();
+  if (m!==lastMinute) {
+    lastMinute=m;
 
-  // Vibration
-  if (m === 0) {
-    Bangle.buzz(350,1.0);
-    setTimeout(()=>Bangle.buzz(350,1.0),450);
-    setTimeout(()=>Bangle.buzz(350,1.0),900);
-  } else if (m === 30) {
-    Bangle.buzz(300,0.9);
+    if (m===0){
+      Bangle.buzz(350,1);
+      setTimeout(()=>Bangle.buzz(350,1),450);
+      setTimeout(()=>Bangle.buzz(350,1),900);
+    } else if (m===30){
+      Bangle.buzz(300,0.9);
+    }
+
+    currentHora=getHora();
+    drawAll();
   }
-
-  // Flip Masa/Nak
-  showMasa = !showMasa;
-
-  // Vishnu cycle every 20 min
-  if (m % 20 === 0) currentVishnu = getVishnuNameOfDay();
-
-  // Hora update
-  currentHora = getHora();
-
-  drawAll();
 }
 
-/* ------------ INIT ------------ */
+/* -------------------- INIT -------------------- */
 
 function init() {
   Bangle.setUI("clock");
-  Bangle.setOptions({
-    wakeOnTwist:true,
-    twistThreshold:1500,
-    twistMaxY:-1500,
-    twistTimeout:800
-  });
-
   Bangle.setLCDTimeout(10);
 
-  let now = new Date();
-  cachedDateKey = getDateKey(now);
+  let now=new Date();
+  cachedDateKey=getDateKey(now);
 
-  // Panchang
-  panchangData = loadDayData(now);
-  currentMasa   = panchangData ? panchangData.masa : "";
+  panchangData=loadDayData(now);
+  currentMasa=panchangData?panchangData.masa:"";
 
-  // Nakshatra
-  let nakSlots = loadDayNakshatra(cachedDateKey);
-  currentNak = nakSlots ? getCurrentNakFromSlots(nakSlots) : "";
+  tithiSlots=loadDayTithi(cachedDateKey);
+  nakSlots=loadDayNak(cachedDateKey);
+  currentNak=nakSlots?getCurrentNak(nakSlots):"";
 
-  // Vishnu
-  currentVishnu = getVishnuNameOfDay();
-
-  // Ekadashi
-  ekadashiIn = findNextEkadashi();
-
-  // Hora
-  currentHora = getHora();
+  currentVishnu=getVishnuNameOfDay();
+  currentHora=getHora();
+  ekadashiIn=findNextEkadashi();
 
   drawAll();
   setInterval(onMinute,60000);
 
   E.on("midnight",()=>{
     let d=new Date();
-    cachedDateKey = getDateKey(d);
-    panchangData = loadDayData(d);
-    currentMasa = panchangData ? panchangData.masa : "";
-    currentVishnu = getVishnuNameOfDay();
-    ekadashiIn = findNextEkadashi();
-    currentHora = getHora();
+    cachedDateKey=getDateKey(d);
 
-    let nak2 = loadDayNakshatra(cachedDateKey);
-    currentNak = nak2 ? getCurrentNakFromSlots(nak2) : "";
+    panchangData=loadDayData(d);
+    currentMasa=panchangData?panchangData.masa:"";
+
+    tithiSlots=loadDayTithi(cachedDateKey);
+    nakSlots=loadDayNak(cachedDateKey);
+    currentNak=nakSlots?getCurrentNak(nakSlots):"";
+
+    currentVishnu=getVishnuNameOfDay();
+    ekadashiIn=findNextEkadashi();
+    currentHora=getHora();
 
     drawAll();
   });

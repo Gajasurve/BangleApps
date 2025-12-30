@@ -10,6 +10,7 @@
     {"name":"vedic-data.json", "url":"vedic-data.json"},
     {"name":"vedic-names.json", "url":"vedic-names.json"},
     {"name":"sunrise.json", "url":"sunrise.json"},
+    { "name": "tithi.json", "url": "tithi.json" },
     {"name":"nakshatra.json", "url":"nakshatra.json"}
   ]
 }

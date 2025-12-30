@@ -11,9 +11,9 @@ let tithiSlots = null;
 let nakSlots = null;
 
 let currentMasa = "";
+let currentNak = "";
 let currentVishnu = "";
 let currentHora = "--";
-let currentNak = "";
 let ekadashiIn = "--";
 
 let lastMinute = -1;
@@ -52,18 +52,17 @@ function getDateKey(d) {
 
 /* -------------------- DATA LOADERS -------------------- */
 
-// Masa only (small JSON – safe)
+// Masa only
 function loadDayData(date) {
   let json = Storage.readJSON("vedic-data.json",1);
   let key = getDateKey(date);
   return (json && json[key]) ? json[key] : null;
 }
 
-// Vishnu names (tiny)
+// Vishnu names
 function getVishnuNameOfDay() {
   let names = Storage.readJSON("vedic-names.json",1);
   if (!names || !names.length) return "";
-
   let today = new Date();
   let start = new Date(today.getFullYear(),0,1);
   let dayOfYear = Math.floor((today-start)/86400000);
@@ -77,7 +76,7 @@ function loadSunriseData() {
   return sunriseData;
 }
 
-/* -------------------- STREAMING JSON LOADERS -------------------- */
+/* -------------------- STREAMING JSON -------------------- */
 
 function streamDayArray(filename, dateKey) {
   let file = Storage.read(filename);
@@ -99,7 +98,6 @@ function streamDayArray(filename, dateKey) {
     }
     end++;
   }
-  if (depth !== 0) return null;
 
   try {
     return JSON.parse(file.slice(start,end+1));
@@ -108,12 +106,12 @@ function streamDayArray(filename, dateKey) {
   }
 }
 
-function loadDayTithi(dateKey) {
-  return streamDayArray("tithi.json", dateKey);
+function loadDayTithi(key) {
+  return streamDayArray("tithi.json", key);
 }
 
-function loadDayNak(dateKey) {
-  return streamDayArray("nakshatra.json", dateKey);
+function loadDayNak(key) {
+  return streamDayArray("nakshatra.json", key);
 }
 
 /* -------------------- HORA -------------------- */
@@ -151,7 +149,7 @@ function findNextEkadashi() {
   return "--";
 }
 
-/* -------------------- TITHI -------------------- */
+/* -------------------- TITHI / NAK -------------------- */
 
 function getCurrentSlot(slots) {
   let nowMin = new Date().getHours()*60 + new Date().getMinutes();
@@ -171,10 +169,16 @@ function formatTithi(slot) {
   return paksha + num + "(" + nat + ")";
 }
 
-/* -------------------- NAKSHATRA -------------------- */
-
 function getCurrentNak(slots) {
   return getCurrentSlot(slots).name;
+}
+
+/* -------------------- DISPLAY FLIP -------------------- */
+
+function getTopLabel() {
+  return (new Date().getMinutes() % 2 === 0)
+    ? currentMasa
+    : currentNak;
 }
 
 /* -------------------- DRAW -------------------- */
@@ -197,7 +201,7 @@ function drawAll() {
 
   g.setColor("#FFA500");
   g.setFontAlign(0,-1);
-  g.drawString(currentMasa,88,22);
+  g.drawString(getTopLabel(),88,22);
 
   let d=new Date();
   g.setFont("Vector",50);
@@ -252,6 +256,8 @@ function onMinute() {
     }
 
     currentHora=getHora();
+    if (nakSlots) currentNak=getCurrentNak(nakSlots);
+
     drawAll();
   }
 }
@@ -261,6 +267,14 @@ function onMinute() {
 function init() {
   Bangle.setUI("clock");
   Bangle.setLCDTimeout(10);
+
+  // 🔴 THIS WAS MISSING — restores motion & wake
+  Bangle.setOptions({
+    wakeOnTwist: true,
+    twistThreshold: 1500,
+    twistMaxY: -1500,
+    twistTimeout: 800
+  });
 
   let now=new Date();
   cachedDateKey=getDateKey(now);

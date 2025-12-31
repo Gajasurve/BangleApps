@@ -138,13 +138,19 @@ function findNextEkadashi() {
   let base = new Date();
   base.setHours(0,0,0,0);
 
-  for (let i=0;i<=15;i++) {
+  for (let i = 0; i <= 15; i++) {
     let d = new Date(base.getTime());
-    d.setDate(base.getDate()+i);
-    let data = loadDayData(d);
-    if (!data || !data.tithi) continue;
-    for (let t of data.tithi)
-      if (t.name==="Ekadashi") return i;
+    d.setDate(base.getDate() + i);
+
+    let key = getDateKey(d);
+    let slots = loadDayTithi(key);
+    if (!slots) continue;
+
+    for (let s of slots) {
+      if (s.name === "Ekadashi") {
+        return i;
+      }
+    }
   }
   return "--";
 }

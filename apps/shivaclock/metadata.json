@@ -4,7 +4,7 @@
   "version": "1.2.0",
   "type": "clock",
   "icon": "app.png",
-  "description": "Advanced Panchang watchface with Hora, Nakshatra, Vishnu names and Nak",
+  "description": "Advanced Panchang watchface with Hora, Nakshatra, Vishnu names and Nak Woth corrected Tithi",
   "storage": [
     {"name":"shivaclock.app.js", "url":"shivaclock.app.js"},
     {"name":"vedic-data.json", "url":"vedic-data.json"},

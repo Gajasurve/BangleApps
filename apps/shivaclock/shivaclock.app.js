@@ -12,6 +12,7 @@ let nakSlots = null;
 
 let currentMasa = "";
 let currentNak = "";
+let currentTithi = null;
 let currentVishnu = "";
 let currentHora = "--";
 let ekadashiIn = "--";
@@ -225,10 +226,10 @@ function drawAll() {
     88,104
   );
 
-  if (tithiSlots) {
+  if (currentTithi) {
     g.setFont("Vector",18);
     g.setFontAlign(-1,0);
-    g.drawString(formatTithi(getCurrentSlot(tithiSlots)),6,135);
+    g.drawString(formatTithi(currentTithi),6,135);
   }
 
   g.setColor("#000000");
@@ -263,6 +264,7 @@ function onMinute() {
 
     currentHora=getHora();
     if (nakSlots) currentNak=getCurrentNak(nakSlots);
+    if (tithiSlots) currentTithi=getCurrentSlot(tithiSlots);
 
     drawAll();
   }
@@ -291,6 +293,7 @@ function init() {
   tithiSlots=loadDayTithi(cachedDateKey);
   nakSlots=loadDayNak(cachedDateKey);
   currentNak=nakSlots?getCurrentNak(nakSlots):"";
+  currentTithi=tithiSlots?getCurrentSlot(tithiSlots):null;
 
   currentVishnu=getVishnuNameOfDay();
   currentHora=getHora();
